@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'generator/style.css' %}?v=4">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Password Generator</h1>
+        <p class="subtitle">Cryptographically Secure · Zero Knowledge</p>
+
+        <!-- Password Display -->
+        <div class="password-display" id="password-display">
+            <span id="password-result">Click Generate</span>
+            <button id="copy-btn" title="Copy to clipboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+        </div>
+
+        <!-- Strength Meter -->
+        <div class="strength-meter">
+            <div class="strength-bar" id="strength-bar"></div>
+        </div>
+        <div class="strength-label" id="strength-label"></div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="length">Length (<span id="length-val">16</span>)</label>
+                    <input type="range" id="length" min="8" max="128" value="16">
+                </div>
+                <div class="control-group">
+                    <label for="count">How many? (<span id="count-val">1</span>)</label>
+                    <input type="range" id="count" min="1" max="10" value="1">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="custom-name">Embed Custom Name / Keyword <span class="optional-tag">(optional)</span></label>
+                <input type="text" id="custom-name" placeholder="e.g. John, Cat, Hero123" maxlength="32" autocomplete="off">
+            </div>
+
+            <div class="control-group checkbox-group">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="uppercase" checked>
+                    <span class="checkmark"></span>
+                    Uppercase (A-Z)
+                </label>
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="lowercase" checked>
+                    <span class="checkmark"></span>
+                    Lowercase (a-z)
+                </label>
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="numbers" checked>
+                    <span class="checkmark"></span>
+                    Numbers (0-9)
+                </label>
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="symbols" checked>
+                    <span class="checkmark"></span>
+                    Symbols (!@#$...)
+                </label>
+                <label class="custom-checkbox ambiguous-opt">
+                    <input type="checkbox" id="no_ambiguous">
+                    <span class="checkmark"></span>
+                    Exclude ambiguous chars (0, O, l, 1, I)
+                </label>
+            </div>
+        </div>
+
+        <button id="generate-btn">Generate Password</button>
+        <div id="error-msg" class="error"></div>
+
+        <!-- Multiple Passwords List -->
+        <div id="multi-results" class="multi-results hidden"></div>
+
+        <!-- Password History -->
+        <div class="history-section">
+            <h3>Recent Passwords <span class="history-clear" id="clear-history">Clear</span></h3>
+            <ul id="history-list" class="history-list">
+                <li class="history-empty">No history yet</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="{% static 'generator/script.js' %}?v=4"></script>
+</body>
+</html>

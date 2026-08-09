@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#030712">
+    <title>SecureApp — Login</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=6">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-box">
+            <div class="auth-icon">⚡</div>
+            <h1 id="auth-title">Welcome Back</h1>
+            <p id="auth-subtitle">Sign in to access Tasks & Passwords</p>
+
+            <form id="auth-form" action="javascript:void(0)">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter username" required autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required autocomplete="password">
+                </div>
+                <div id="auth-error" class="auth-error"></div>
+                <button type="button" id="auth-btn" class="auth-primary-btn">Sign In</button>
+            </form>
+
+            <p class="auth-switch">
+                <span id="auth-switch-text">Don't have an account?</span>
+                <a href="#" id="auth-switch-link">Register</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="/static/auth.js?v=6"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+      }
+    </script>
+</body>
+</html>

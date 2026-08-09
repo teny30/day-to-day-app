@@ -1,0 +1,13 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.db
+*.sqlite3
+instance/*.db
+node_modules/
+mobile_app/node_modules/
+mobile_app/android/build/
+mobile_app/android/app/build/
+mobile_app/android/.gradle/
+.DS_Store

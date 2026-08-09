@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster — Smart To-Do List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=4">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="nav-brand">
+                <div class="nav-logo">✓</div>
+                <h1>TaskMaster</h1>
+            </div>
+            <div class="nav-stats">
+                <span id="task-count-badge" class="task-count">0 tasks</span>
+                <button id="clear-completed-btn" class="danger-btn">Clear Done</button>
+                <button id="logout-btn" class="secondary-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="add-task-card">
+            <h2>New Task</h2>
+            <form id="add-task-form" action="javascript:void(0)">
+                <div class="form-row">
+                    <input type="text" id="task-title" placeholder="What needs to be done?" required>
+                    <select id="task-priority">
+                        <option value="low">🟢 Low</option>
+                        <option value="medium" selected>🟡 Medium</option>
+                        <option value="high">🔴 High</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <input type="text" id="task-desc" placeholder="Description (optional)">
+                    <input type="date" id="task-due" title="Due date">
+                </div>
+                <button type="button" id="add-task-btn" class="primary-btn">+ Add Task</button>
+            </form>
+        </div>
+
+        <div class="filter-bar">
+            <input type="text" id="search-input" placeholder="🔍  Search tasks…">
+            <div class="filter-pills">
+                <button class="pill active" data-priority="all">All</button>
+                <button class="pill high" data-priority="high">High</button>
+                <button class="pill medium" data-priority="medium">Medium</button>
+                <button class="pill low" data-priority="low">Low</button>
+            </div>
+        </div>
+
+        <div class="task-lists-container">
+            <div class="task-section">
+                <h3>Active <span id="active-count" class="count-badge">0</span></h3>
+                <ul id="active-tasks" class="task-list">
+                    <li class="task-empty">No active tasks — great job! 🎉</li>
+                </ul>
+            </div>
+            <div class="task-section">
+                <h3>Completed <span id="completed-count" class="count-badge">0</span></h3>
+                <ul id="completed-tasks" class="task-list">
+                    <li class="task-empty">Nothing completed yet</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/app.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: secureapp-web
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --chdir todo_list app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: secureapp-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+
+databases:
+  - name: secureapp-db
+    databaseName: secureapp_db
+    user: secureapp_user
+    plan: free
