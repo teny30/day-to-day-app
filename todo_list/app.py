@@ -4,12 +4,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 import secrets, string, os
 
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///secureapp.db')
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///day_to_day.db')
 if db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'secureapp-super-secret-key-987654321')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'day-to-day-super-secret-key-987654321')
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)

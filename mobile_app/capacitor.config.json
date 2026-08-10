@@ -1,6 +1,6 @@
 {
-  "appId": "com.secureapp.app",
-  "appName": "SecureApp",
+  "appId": "com.daytoday.app",
+  "appName": "Day to Day",
   "webDir": "www",
   "android": {
     "allowMixedContent": true

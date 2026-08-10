@@ -15,14 +15,14 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // ── Auth & Profile Initialization ───────────────────────────────────────────
-let currentUser = localStorage.getItem('secureapp_user') || 'My Account';
+let currentUser = localStorage.getItem('day_to_day_user') || 'My Account';
 (async () => {
     try {
         const r = await fetch('/api/me');
         if (r.ok) {
             const d = await r.json();
             currentUser = d.username;
-            localStorage.setItem('secureapp_user', currentUser);
+            localStorage.setItem('day_to_day_user', currentUser);
         }
     } catch(e) {}
     const chip = document.getElementById('username-chip');
@@ -37,7 +37,7 @@ if (logoutBtn) {
         const name = prompt('Enter your name / account:', currentUser);
         if (name) {
             currentUser = name.trim();
-            localStorage.setItem('secureapp_user', currentUser);
+            localStorage.setItem('day_to_day_user', currentUser);
             document.getElementById('username-chip').textContent = currentUser;
             loadTasks();
         }
@@ -94,7 +94,7 @@ if (notifBtn) {
         const permission = await Notification.requestPermission();
         updateNotifBellState();
         if (permission === 'granted') {
-            sendNotification('⚡ SecureApp Reminders Activated!', { body: 'Task due reminders are now enabled.' });
+            sendNotification('⚡ Day to Day Reminders Activated!', { body: 'Task due reminders are now enabled.' });
             loadTasks();
         }
     });
@@ -139,12 +139,12 @@ let currentPriority = 'all', searchTimer = null;
 
 function getLocalTasks() {
     try {
-        return JSON.parse(localStorage.getItem(`secureapp_tasks_${currentUser}`) || '[]');
+        return JSON.parse(localStorage.getItem(`day_to_day_tasks_${currentUser}`) || '[]');
     } catch(e) { return []; }
 }
 
 function saveLocalTasks(tasks) {
-    localStorage.setItem(`secureapp_tasks_${currentUser}`, JSON.stringify(tasks));
+    localStorage.setItem(`day_to_day_tasks_${currentUser}`, JSON.stringify(tasks));
 }
 
 const loadTasks = async () => {

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">SecureApp</string>
-    <string name="title_activity_main">SecureApp</string>
-    <string name="package_name">com.secureapp.app</string>
-    <string name="custom_url_scheme">com.secureapp.app</string>
+    <string name="app_name">Day to Day</string>
+    <string name="title_activity_main">Day to Day</string>
+    <string name="package_name">com.daytoday.app</string>
+    <string name="custom_url_scheme">com.daytoday.app</string>
 </resources>

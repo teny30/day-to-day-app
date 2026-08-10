@@ -1,7 +1,7 @@
 {
-  "name": "SecureApp — Tasks & Passwords",
-  "short_name": "SecureApp",
-  "description": "Smart To-Do List & Secure Password Generator in one mobile app",
+  "name": "Day to Day — Tasks & Passwords",
+  "short_name": "Day to Day",
+  "description": "Day to Day — Smart To-Do List & Secure Password Generator",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#030712",

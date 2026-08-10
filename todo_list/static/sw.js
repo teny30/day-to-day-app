@@ -1,4 +1,4 @@
-const CACHE_NAME = 'secureapp-v7';
+const CACHE_NAME = 'day-to-day-v1';
 const STATIC_ASSETS = [
   '/static/style.css?v=6',
   '/static/app.js?v=7',

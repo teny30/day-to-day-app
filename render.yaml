@@ -1,19 +1,21 @@
 services:
   - type: web
-    name: secureapp-web
+    name: day-to-day-web
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --chdir todo_list app:app
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: secureapp-db
+          name: day-to-day-db
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
 
 databases:
-  - name: secureapp-db
-    databaseName: secureapp_db
-    user: secureapp_user
+  - name: day-to-day-db
+    databaseName: day_to_day_db
+    user: day_to_day_user
     plan: free

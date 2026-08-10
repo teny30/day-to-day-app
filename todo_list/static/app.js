@@ -90,7 +90,7 @@ if (notifBtn) {
         const permission = await Notification.requestPermission();
         updateNotifBellState();
         if (permission === 'granted') {
-            sendNotification('⚡ SecureApp Notifications On!', {
+            sendNotification('⚡ Day to Day Notifications On!', {
                 body: 'Task due reminders are now active!'
             });
             fetchTasks();
