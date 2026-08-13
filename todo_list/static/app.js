@@ -48,6 +48,20 @@ function updateNotifBellState() {
 }
 
 async function sendNotification(title, options) {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        try {
+            await window.Capacitor.Plugins.LocalNotifications.schedule({
+                notifications: [{
+                    title: title,
+                    body: options.body || '',
+                    id: Math.floor(Math.random() * 100000),
+                    schedule: { at: new Date(Date.now() + 100) }
+                }]
+            });
+            return;
+        } catch(e) {}
+    }
+
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
         if ('serviceWorker' in navigator) {
@@ -101,39 +115,80 @@ if (notifBtn) {
 function checkDueNotifications(tasks) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const notifiedKey = `notified_tasks_${todayStr}`;
-    let notifiedIds = [];
+    const now = new Date();
+    let notifiedMap = {};
     try {
-        notifiedIds = JSON.parse(localStorage.getItem(notifiedKey) || '[]');
+        notifiedMap = JSON.parse(localStorage.getItem('notified_task_times') || '{}');
     } catch(e) {}
 
     let newlyNotified = false;
 
     tasks.forEach(t => {
         if (t.completed || !t.due_date) return;
-        if (notifiedIds.includes(t.id)) return;
 
-        if (t.due_date === todayStr) {
-            sendNotification(`📅 Task Due Today: ${t.title}`, {
-                body: t.description || `Priority: ${t.priority.toUpperCase()}`,
-                tag: `task-due-${t.id}`
+        let targetTime;
+        if (t.due_time) {
+            targetTime = new Date(`${t.due_date}T${t.due_time}:00`);
+        } else {
+            // Default to start of due day (9 AM) if no specific time set
+            targetTime = new Date(`${t.due_date}T09:00:00`);
+        }
+
+        const notifyKey = `${t.id}_${t.due_date}_${t.due_time || 'allday'}`;
+        if (notifiedMap[notifyKey]) return;
+
+        if (now >= targetTime) {
+            const timeTag = t.due_time ? formatTime12(t.due_time) : 'Today';
+            sendNotification(`⏰ Task Reminder: ${t.title}`, {
+                body: `${t.description ? t.description + ' • ' : ''}Due: ${timeTag} (${t.priority.toUpperCase()} priority)`,
+                tag: `task-time-${t.id}`
             });
-            notifiedIds.push(t.id);
-            newlyNotified = true;
-        } else if (t.due_date < todayStr) {
-            sendNotification(`⚠️ Task Overdue: ${t.title}`, {
-                body: `Was due on ${t.due_date}. Tap to complete!`,
-                tag: `task-overdue-${t.id}`
-            });
-            notifiedIds.push(t.id);
+            notifiedMap[notifyKey] = true;
             newlyNotified = true;
         }
     });
 
     if (newlyNotified) {
-        localStorage.setItem(notifiedKey, JSON.stringify(notifiedIds));
+        localStorage.setItem('notified_task_times', JSON.stringify(notifiedMap));
     }
+}
+
+function formatTime12(timeStr) {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    let h = parseInt(parts[0], 10);
+    const m = parts[1] || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+}
+
+function formatModernDateTime(dateStr, timeStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-').map(Number);
+    const taskDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    let dateLabel = '';
+    if (taskDate.getTime() === today.getTime()) {
+        dateLabel = 'Today';
+    } else if (taskDate.getTime() === tomorrow.getTime()) {
+        dateLabel = 'Tomorrow';
+    } else if (taskDate.getTime() === yesterday.getTime()) {
+        dateLabel = 'Yesterday';
+    } else {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        dateLabel = `${months[taskDate.getMonth()]} ${taskDate.getDate()}${taskDate.getFullYear() !== now.getFullYear() ? ', ' + taskDate.getFullYear() : ''}`;
+    }
+
+    const timeLabel = timeStr ? ` at ${formatTime12(timeStr)}` : '';
+    return `${dateLabel}${timeLabel}`;
 }
 
 // ── TASKS ────────────────────────────────────────────────────────────────────
@@ -173,9 +228,19 @@ const buildItem = (task) => {
     li.className = `task-item priority-${task.priority} ${task.completed ? 'completed' : ''}`;
     let due = '';
     if (task.due_date) {
-        const today = new Date().toISOString().split('T')[0];
-        const ov = !task.completed && task.due_date < today;
-        due = `<span class="due-date-tag ${ov ? 'overdue' : ''}">📅 ${task.due_date}${ov ? ' · Overdue' : ''}</span>`;
+        const now = new Date();
+        let targetTime;
+        if (task.due_time) {
+            targetTime = new Date(`${task.due_date}T${task.due_time}:00`);
+        } else {
+            targetTime = new Date(`${task.due_date}T23:59:59`);
+        }
+
+        const isOverdue = !task.completed && now > targetTime;
+        const formattedDisplay = formatModernDateTime(task.due_date, task.due_time);
+        const statusText = isOverdue ? ' · Overdue' : '';
+
+        due = `<span class="due-date-tag ${isOverdue ? 'overdue' : ''}">📅 ${formattedDisplay}${statusText}</span>`;
     }
     li.innerHTML = `
         <div class="task-content">
@@ -202,20 +267,281 @@ const buildItem = (task) => {
     return li;
 };
 
+// ── CUSTOM GRAPHICAL CALENDAR MODAL LOGIC ────────────────────────────────────
+let calYear, calMonth, selectedCalDateStr = '';
+
+function initCalendarModal() {
+    const calModal = document.getElementById('calendar-modal');
+    const calGrid = document.getElementById('calendar-grid');
+    const calTitle = document.getElementById('cal-month-year-title');
+    const dueInput = document.getElementById('task-due');
+    if (!calModal || !dueInput) return;
+
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+
+    function renderCalendar() {
+        if (!calGrid) return;
+        calGrid.innerHTML = '';
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        calTitle.textContent = `${months[calMonth]} ${calYear}`;
+
+        const firstDay = new Date(calYear, calMonth, 1).getDay();
+        const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+        for (let i = 0; i < firstDay; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'cal-day empty';
+            calGrid.appendChild(empty);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dayEl = document.createElement('div');
+            dayEl.className = 'cal-day';
+            const mStr = String(calMonth + 1).padStart(2, '0');
+            const dStr = String(d).padStart(2, '0');
+            const dateVal = `${calYear}-${mStr}-${dStr}`;
+            dayEl.textContent = d;
+
+            if (dateVal === todayStr) dayEl.classList.add('today');
+            if (dateVal === selectedCalDateStr) dayEl.classList.add('selected');
+
+            dayEl.addEventListener('click', () => {
+                selectedCalDateStr = dateVal;
+                dueInput.dataset.date = dateVal;
+                dueInput.value = formatModernDateTime(dateVal, null);
+                closeCalModal();
+            });
+
+            calGrid.appendChild(dayEl);
+        }
+    }
+
+    function openCalModal() {
+        if (dueInput.dataset.date) {
+            const parts = dueInput.dataset.date.split('-').map(Number);
+            calYear = parts[0];
+            calMonth = parts[1] - 1;
+            selectedCalDateStr = dueInput.dataset.date;
+        } else {
+            const n = new Date();
+            calYear = n.getFullYear();
+            calMonth = n.getMonth();
+        }
+        renderCalendar();
+        calModal.classList.remove('hidden');
+    }
+
+    function closeCalModal() {
+        calModal.classList.add('hidden');
+    }
+
+    const trigger = document.getElementById('date-picker-trigger');
+    if (trigger) trigger.addEventListener('click', openCalModal);
+    dueInput.addEventListener('click', openCalModal);
+    document.getElementById('cal-overlay').addEventListener('click', closeCalModal);
+    document.getElementById('cal-close-btn').addEventListener('click', closeCalModal);
+
+    document.getElementById('cal-prev-month').addEventListener('click', () => {
+        calMonth--;
+        if (calMonth < 0) { calMonth = 11; calYear--; }
+        renderCalendar();
+    });
+    document.getElementById('cal-next-month').addEventListener('click', () => {
+        calMonth++;
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        renderCalendar();
+    });
+    document.getElementById('cal-today-btn').addEventListener('click', () => {
+        const n = new Date();
+        const yStr = n.getFullYear();
+        const mStr = String(n.getMonth() + 1).padStart(2, '0');
+        const dStr = String(n.getDate()).padStart(2, '0');
+        selectedCalDateStr = `${yStr}-${mStr}-${dStr}`;
+        dueInput.dataset.date = selectedCalDateStr;
+        dueInput.value = formatModernDateTime(selectedCalDateStr, null);
+        closeCalModal();
+    });
+    document.getElementById('cal-clear-btn').addEventListener('click', () => {
+        selectedCalDateStr = '';
+        dueInput.dataset.date = '';
+        dueInput.value = '';
+        closeCalModal();
+    });
+}
+
+// ── CUSTOM DIGITAL CLOCK MODAL LOGIC ─────────────────────────────────────────
+let clockHour = 2, clockMin = 30, clockAmPm = 'PM';
+
+function initClockModal() {
+    const clockModal = document.getElementById('clock-modal');
+    const timeInput = document.getElementById('task-time');
+    if (!clockModal || !timeInput) return;
+
+    function updateClockDisplay() {
+        const hhStr = String(clockHour).padStart(2, '0');
+        const mmStr = String(clockMin).padStart(2, '0');
+        document.getElementById('clock-display-hh').textContent = hhStr;
+        document.getElementById('clock-display-mm').textContent = mmStr;
+        document.getElementById('clock-display-ampm').textContent = clockAmPm;
+        document.getElementById('hour-val').textContent = hhStr;
+        document.getElementById('min-val').textContent = mmStr;
+
+        document.getElementById('ampm-am').classList.toggle('active', clockAmPm === 'AM');
+        document.getElementById('ampm-pm').classList.toggle('active', clockAmPm === 'PM');
+    }
+
+    function openClockModal() {
+        if (timeInput.dataset.time) {
+            const parts = timeInput.dataset.time.split(':').map(Number);
+            let h = parts[0];
+            clockMin = parts[1] || 0;
+            if (h >= 12) {
+                clockAmPm = 'PM';
+                clockHour = h % 12 || 12;
+            } else {
+                clockAmPm = 'AM';
+                clockHour = h || 12;
+            }
+        } else {
+            const n = new Date();
+            let h = n.getHours();
+            clockMin = n.getMinutes();
+            clockAmPm = h >= 12 ? 'PM' : 'AM';
+            clockHour = h % 12 || 12;
+        }
+        updateClockDisplay();
+        clockModal.classList.remove('hidden');
+    }
+
+    function closeClockModal() {
+        clockModal.classList.add('hidden');
+    }
+
+    const trigger = document.getElementById('time-picker-trigger');
+    if (trigger) trigger.addEventListener('click', openClockModal);
+    timeInput.addEventListener('click', openClockModal);
+    document.getElementById('clock-overlay').addEventListener('click', closeClockModal);
+
+    document.getElementById('hour-up').addEventListener('click', () => {
+        clockHour = clockHour % 12 + 1;
+        updateClockDisplay();
+    });
+    document.getElementById('hour-down').addEventListener('click', () => {
+        clockHour = (clockHour - 2 + 12) % 12 + 1;
+        updateClockDisplay();
+    });
+    document.getElementById('min-up').addEventListener('click', () => {
+        clockMin = (clockMin + 1) % 60;
+        updateClockDisplay();
+    });
+    document.getElementById('min-down').addEventListener('click', () => {
+        clockMin = (clockMin - 1 + 60) % 60;
+        updateClockDisplay();
+    });
+
+    document.getElementById('ampm-am').addEventListener('click', () => { clockAmPm = 'AM'; updateClockDisplay(); });
+    document.getElementById('ampm-pm').addEventListener('click', () => { clockAmPm = 'PM'; updateClockDisplay(); });
+
+    document.querySelectorAll('.quick-min').forEach(btn => {
+        btn.addEventListener('click', () => {
+            clockMin = parseInt(btn.dataset.m, 10);
+            updateClockDisplay();
+        });
+    });
+
+    document.getElementById('clock-now-btn').addEventListener('click', () => {
+        const n = new Date();
+        let h = n.getHours();
+        clockMin = n.getMinutes();
+        clockAmPm = h >= 12 ? 'PM' : 'AM';
+        clockHour = h % 12 || 12;
+        updateClockDisplay();
+    });
+
+    document.getElementById('clock-clear-btn').addEventListener('click', () => {
+        timeInput.dataset.time = '';
+        timeInput.value = '';
+        closeClockModal();
+    });
+
+    document.getElementById('clock-set-btn').addEventListener('click', () => {
+        let h24 = clockHour % 12;
+        if (clockAmPm === 'PM') h24 += 12;
+        const time24Str = `${String(h24).padStart(2,'0')}:${String(clockMin).padStart(2,'0')}`;
+        timeInput.dataset.time = time24Str;
+        timeInput.value = `${clockHour}:${String(clockMin).padStart(2,'0')} ${clockAmPm}`;
+        closeClockModal();
+    });
+}
+
+document.querySelectorAll('.timing-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (btn.classList.contains('quick-min') || btn.id.startsWith('cal-') || btn.id.startsWith('clock-')) return;
+        const preset = btn.dataset.preset;
+        if (!preset) return;
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+
+        const dueInput = document.getElementById('task-due');
+        const timeInput = document.getElementById('task-time');
+
+        if (preset === 'today') {
+            dueInput.dataset.date = todayStr;
+            dueInput.value = formatModernDateTime(todayStr, null);
+        } else if (preset === 'tomorrow') {
+            const tom = new Date(now);
+            tom.setDate(tom.getDate() + 1);
+            const tomY = tom.getFullYear();
+            const tomM = String(tom.getMonth() + 1).padStart(2, '0');
+            const tomD = String(tom.getDate()).padStart(2, '0');
+            const tomStr = `${tomY}-${tomM}-${tomD}`;
+            dueInput.dataset.date = tomStr;
+            dueInput.value = formatModernDateTime(tomStr, null);
+        } else if (preset === '1h') {
+            dueInput.dataset.date = todayStr;
+            dueInput.value = formatModernDateTime(todayStr, null);
+            const in1h = new Date(now.getTime() + 60 * 60 * 1000);
+            const h24 = String(in1h.getHours()).padStart(2, '0');
+            const m = String(in1h.getMinutes()).padStart(2, '0');
+            timeInput.dataset.time = `${h24}:${m}`;
+            timeInput.value = formatTime12(`${h24}:${m}`);
+        } else if (preset === 'tonight') {
+            dueInput.dataset.date = todayStr;
+            dueInput.value = formatModernDateTime(todayStr, null);
+            timeInput.dataset.time = '20:00';
+            timeInput.value = '8:00 PM';
+        }
+    });
+});
+
 document.getElementById('add-task-btn').addEventListener('click', async () => {
     const title = document.getElementById('task-title').value.trim();
     if (!title) return;
+    const due_date = document.getElementById('task-due').dataset.date || null;
+    const due_time = document.getElementById('task-time').dataset.time || null;
     await fetch('/api/tasks', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-            title, description: document.getElementById('task-desc').value.trim(),
+            title,
+            description: document.getElementById('task-desc').value.trim(),
             priority: document.getElementById('task-priority').value,
-            due_date: document.getElementById('task-due').value || null
+            due_date: due_date,
+            due_time: due_time
         })
     });
     document.getElementById('task-title').value  = '';
     document.getElementById('task-desc').value   = '';
     document.getElementById('task-due').value    = '';
+    document.getElementById('task-due').dataset.date = '';
+    document.getElementById('task-time').value   = '';
+    document.getElementById('task-time').dataset.time = '';
     document.getElementById('task-priority').value = 'medium';
     fetchTasks();
 });
@@ -244,8 +570,8 @@ document.getElementById('clear-completed-btn').addEventListener('click', async (
 
 fetchTasks();
 
-// Periodically check notifications every 60 seconds
-setInterval(fetchTasks, 60000);
+// Periodically check notifications every 10 seconds for timely delivery
+setInterval(fetchTasks, 10000);
 
 // ── PASSWORD GENERATOR ────────────────────────────────────────────────────────
 const pwResult   = document.getElementById('pw-result');
@@ -345,7 +671,11 @@ document.getElementById('pw-copy-btn').addEventListener('click', () => {
         navigator.clipboard.writeText(txt).then(() => {
             const btn = document.getElementById('pw-copy-btn');
             btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-            setTimeout(() => btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`, 2000);
+            setTimeout(() => btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v2"/></svg>`, 2000);
         });
     }
 });
+
+// Initialize Graphical Calendar & Digital Clock Modals
+initCalendarModal();
+initClockModal();

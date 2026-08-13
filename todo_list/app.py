@@ -33,11 +33,14 @@ class Task(db.Model):
     completed   = db.Column(db.Boolean, default=False)
     priority    = db.Column(db.String(10), default='medium')
     due_date    = db.Column(db.String(20), nullable=True)
+    due_time    = db.Column(db.String(10), nullable=True)
     user_id     = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 def task_dict(t):
     return {'id': t.id, 'title': t.title, 'description': t.description,
-            'completed': t.completed, 'priority': t.priority, 'due_date': t.due_date}
+            'completed': t.completed, 'priority': t.priority,
+            'due_date': getattr(t, 'due_date', None),
+            'due_time': getattr(t, 'due_time', None)}
 
 def auth_required():
     if 'user_id' not in session:
@@ -117,7 +120,9 @@ def create_task():
     if err: return err
     d = request.json
     t = Task(title=d.get('title'), description=d.get('description',''),
-             priority=d.get('priority','medium'), due_date=d.get('due_date') or None,
+             priority=d.get('priority','medium'),
+             due_date=d.get('due_date') or None,
+             due_time=d.get('due_time') or None,
              user_id=session['user_id'])
     db.session.add(t); db.session.commit()
     return jsonify(task_dict(t)), 201
@@ -129,8 +134,12 @@ def update_task(tid):
     t = Task.query.filter_by(id=tid, user_id=session['user_id']).first()
     if not t: return jsonify({'error': 'Not found'}), 404
     d = request.json
-    for k in ('title','description','completed','priority','due_date'):
-        if k in d: setattr(t, k, d[k] if k != 'due_date' else (d[k] or None))
+    for k in ('title','description','completed','priority','due_date','due_time'):
+        if k in d:
+            val = d[k]
+            if k in ('due_date', 'due_time'):
+                val = val or None
+            setattr(t, k, val)
     db.session.commit()
     return jsonify(task_dict(t))
 
@@ -182,8 +191,18 @@ def generate():
     return jsonify({'passwords': [build() for _ in range(count)]})
 
 # ── Boot ─────────────────────────────────────────────────────────────────────
+def init_db():
+    with app.app_context():
+        db.create_all()
+        try:
+            from sqlalchemy import text
+            db.session.execute(text("ALTER TABLE task ADD COLUMN due_time VARCHAR(10)"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+init_db()
+
 if __name__ == '__main__':
-    with app.app_context(): db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True)
-else:
-    with app.app_context(): db.create_all()
+

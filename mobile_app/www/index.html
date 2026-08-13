@@ -53,7 +53,22 @@
                     </div>
                     <div class="form-row">
                         <input type="text" id="task-desc" placeholder="Description (optional)">
-                        <input type="date" id="task-due">
+                    </div>
+                    <div class="form-row">
+                        <div class="input-with-icon" id="date-picker-trigger">
+                            <span class="input-icon">📅</span>
+                            <input type="text" id="task-due" readonly placeholder="Select Date 📅" title="Click to open Graphical Calendar" data-date="">
+                        </div>
+                        <div class="input-with-icon" id="time-picker-trigger">
+                            <span class="input-icon">⏰</span>
+                            <input type="text" id="task-time" readonly placeholder="Select Time ⏰" title="Click to open Digital Clock" data-time="">
+                        </div>
+                    </div>
+                    <div class="quick-timing-chips">
+                        <button type="button" class="timing-chip" data-preset="today">Today</button>
+                        <button type="button" class="timing-chip" data-preset="tomorrow">Tomorrow</button>
+                        <button type="button" class="timing-chip" data-preset="1h">+1 Hr</button>
+                        <button type="button" class="timing-chip" data-preset="tonight">Tonight 8 PM</button>
                     </div>
                     <button type="button" id="add-task-btn" class="primary-btn">+ Add Task</button>
                 </div>
@@ -183,7 +198,110 @@
     </button>
 </nav>
 
-<script src="app.js?v=8"></script>
+<!-- ── CUSTOM GRAPHICAL CALENDAR MODAL ── -->
+<div id="calendar-modal" class="custom-modal hidden">
+    <div class="modal-overlay" id="cal-overlay"></div>
+    <div class="modal-card glass-modal">
+        <div class="modal-header">
+            <button type="button" class="icon-btn" id="cal-prev-month">◀</button>
+            <span id="cal-month-year-title" class="modal-title">August 2026</span>
+            <button type="button" class="icon-btn" id="cal-next-month">▶</button>
+        </div>
+        <div class="calendar-days-header">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+        </div>
+        <div id="calendar-grid" class="calendar-grid"></div>
+        <div class="modal-footer">
+            <button type="button" class="timing-chip" id="cal-today-btn">Today</button>
+            <button type="button" class="timing-chip" id="cal-clear-btn">Clear</button>
+            <button type="button" class="primary-btn-sm" id="cal-close-btn">Done</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── CUSTOM DIGITAL CLOCK MODAL ── -->
+<div id="clock-modal" class="custom-modal hidden">
+    <div class="modal-overlay" id="clock-overlay"></div>
+    <div class="modal-card glass-modal clock-modal-card">
+        <div class="clock-display-header">
+            <span class="modal-title">⏰ Digital Clock</span>
+            <div class="digital-time-banner">
+                <span id="clock-display-hh">02</span>:<span id="clock-display-mm">30</span>
+                <span id="clock-display-ampm" class="ampm-badge">PM</span>
+            </div>
+        </div>
+        
+        <div class="clock-selectors">
+            <div class="selector-group">
+                <label>Hour</label>
+                <div class="spin-buttons">
+                    <button type="button" class="spin-btn" id="hour-up">▲</button>
+                    <span id="hour-val" class="spin-val">02</span>
+                    <button type="button" class="spin-btn" id="hour-down">▼</button>
+                </div>
+            </div>
+            <div class="selector-colon">:</div>
+            <div class="selector-group">
+                <label>Minute</label>
+                <div class="spin-buttons">
+                    <button type="button" class="spin-btn" id="min-up">▲</button>
+                    <span id="min-val" class="spin-val">30</span>
+                    <button type="button" class="spin-btn" id="min-down">▼</button>
+                </div>
+            </div>
+            <div class="selector-group ampm-group">
+                <label>Format</label>
+                <div class="ampm-toggle">
+                    <button type="button" class="ampm-btn" id="ampm-am">AM</button>
+                    <button type="button" class="ampm-btn active" id="ampm-pm">PM</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="clock-quick-minutes">
+            <button type="button" class="timing-chip quick-min" data-m="00">:00</button>
+            <button type="button" class="timing-chip quick-min" data-m="15">:15</button>
+            <button type="button" class="timing-chip quick-min" data-m="30">:30</button>
+            <button type="button" class="timing-chip quick-min" data-m="45">:45</button>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="timing-chip" id="clock-now-btn">Current Time</button>
+            <button type="button" class="timing-chip" id="clock-clear-btn">Clear</button>
+            <button type="button" class="primary-btn-sm" id="clock-set-btn">Set Time</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── FULL-SCREEN AUTH MODAL (LOGIN / REGISTER) ── -->
+<div id="auth-modal" class="custom-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="auth-box glass-modal">
+        <div class="auth-icon" id="mobile-auth-icon">⚡</div>
+        <h1 id="mobile-auth-title">Welcome Back</h1>
+        <p id="mobile-auth-subtitle">Sign in to access Day to Day</p>
+
+        <form id="mobile-auth-form" action="javascript:void(0)">
+            <div class="input-group">
+                <label for="mobile-auth-username">USERNAME</label>
+                <input type="text" id="mobile-auth-username" placeholder="Enter username" required autocomplete="username">
+            </div>
+            <div class="input-group">
+                <label for="mobile-auth-password">PASSWORD</label>
+                <input type="password" id="mobile-auth-password" placeholder="Enter password" required autocomplete="current-password">
+            </div>
+            <div id="mobile-auth-error" class="auth-error"></div>
+            <button type="submit" id="mobile-auth-btn" class="auth-primary-btn">Sign In</button>
+        </form>
+
+        <p class="auth-switch">
+            <span id="mobile-auth-switch-text">Don't have an account?</span>
+            <a href="#" id="mobile-auth-switch-link">Register</a>
+        </p>
+    </div>
+</div>
+
+<script src="app.js?v=11"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
