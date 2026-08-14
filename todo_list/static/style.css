@@ -300,6 +300,10 @@ select option { background: #0f1420; color: var(--text); }
 .text-link:hover { text-decoration: underline; }
 
 /* ── TASK SECTION ────────────────────────────────────── */
+.add-card.hidden {
+    display: none !important;
+}
+
 .add-card {
     background: linear-gradient(145deg, rgba(20, 26, 42, 0.85), rgba(12, 16, 28, 0.9));
     backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
@@ -310,6 +314,12 @@ select option { background: #0f1420; color: var(--text); }
     margin-bottom: 1.25rem;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     transition: all 0.3s ease;
+    animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .add-card:hover {

@@ -676,6 +676,33 @@ document.querySelectorAll('.timing-chip').forEach(btn => {
     });
 });
 
+// ── TOGGLE NEW TASK FORM ──────────────────────────────────────────────────
+const toggleAddFormBtn = document.getElementById('toggle-add-form-btn');
+const closeAddFormBtn  = document.getElementById('close-add-form-btn');
+const addTaskCard      = document.getElementById('add-task-card');
+
+function openTaskForm() {
+    if (!addTaskCard) return;
+    addTaskCard.classList.remove('hidden');
+    if (toggleAddFormBtn) toggleAddFormBtn.style.display = 'none';
+    const titleInput = document.getElementById('task-title');
+    if (titleInput) setTimeout(() => titleInput.focus(), 100);
+}
+
+function closeTaskForm() {
+    if (!addTaskCard) return;
+    addTaskCard.classList.add('hidden');
+    if (toggleAddFormBtn) toggleAddFormBtn.style.display = 'flex';
+}
+
+if (toggleAddFormBtn) {
+    toggleAddFormBtn.addEventListener('click', openTaskForm);
+}
+
+if (closeAddFormBtn) {
+    closeAddFormBtn.addEventListener('click', closeTaskForm);
+}
+
 document.getElementById('add-task-btn').addEventListener('click', async () => {
     const title = document.getElementById('task-title').value.trim();
     if (!title) return;
@@ -711,6 +738,7 @@ document.getElementById('add-task-btn').addEventListener('click', async () => {
     document.getElementById('task-time').value   = '';
     document.getElementById('task-time').dataset.time = '';
     document.getElementById('task-priority').value = 'medium';
+    closeTaskForm();
     loadTasks();
 });
 
