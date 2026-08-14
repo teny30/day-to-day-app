@@ -12,9 +12,11 @@
     --high: #ef4444;
     --medium: #f59e0b;
     --low: #22c55e;
-    --nav-h: 72px;
-    --header-h: 64px;
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --nav-h: 66px;
+    --header-h: 56px;
+    --status-bar-h: max(env(safe-area-inset-top, 0px), 38px);
+    --total-header-h: calc(var(--header-h) + var(--status-bar-h));
+    --safe-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
 }
 
 *,*::before,*::after { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
@@ -43,28 +45,29 @@ body::before {
 /* ── HEADER ────────────────────────────────────────── */
 .app-header {
     position: fixed; top:0; left:0; right:0;
-    height: var(--header-h);
-    background: rgba(3,7,18,0.92);
+    height: var(--total-header-h);
+    padding-top: var(--status-bar-h);
+    background: rgba(3,7,18,0.95);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center;
     justify-content: space-between;
-    padding: 0 1.15rem;
+    padding-left: 1.15rem; padding-right: 1.15rem;
+    box-sizing: border-box;
     z-index: 100;
-    padding-top: env(safe-area-inset-top, 0px);
 }
 
 .header-brand { display:flex; align-items:center; gap:0.65rem; }
 .header-logo {
-    width:38px; height:38px;
+    width:36px; height:36px;
     background: linear-gradient(135deg,#7c3aed,#06b6d4);
     border-radius:10px;
     display:flex; align-items:center; justify-content:center;
-    font-size:1.15rem;
+    font-size:1.1rem;
     box-shadow: 0 0 14px rgba(124,58,237,0.45);
 }
 .header-title { 
-    font-size:1.3rem; font-weight:800; letter-spacing:-0.02em;
+    font-size:1.25rem; font-weight:800; letter-spacing:-0.02em;
     background: linear-gradient(135deg,#c4b5fd,#38bdf8);
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; 
 }
@@ -93,7 +96,7 @@ body::before {
 /* ── MAIN / PANELS ──────────────────────────────────── */
 .app-main {
     position:fixed;
-    top: var(--header-h);
+    top: var(--total-header-h);
     left:0; right:0;
     bottom: calc(var(--nav-h) + var(--safe-bottom));
     overflow:hidden;
@@ -116,7 +119,7 @@ body::before {
 .panel-inner { 
     max-width: 640px;
     margin: 0 auto;
-    padding: 1.25rem 1.15rem calc(1.25rem + var(--safe-bottom)); 
+    padding: 1rem 1.15rem calc(2rem + var(--safe-bottom)); 
 }
 
 /* ── BOTTOM NAV ─────────────────────────────────────── */
